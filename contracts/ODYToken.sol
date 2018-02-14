@@ -49,13 +49,13 @@ contract ODYToken is ERC223, SafeMath, Ownable {
     uint public constant RATE = 830;
 
     // // Emission 40,000,000
-    uint256 public totalSupply = 40000000 * 10 ** uint256(decimals);
+    uint256 public totalSupply = 40000000 ether;
 
     // pre ico hard cap: 1,200,000 ODY
-    uint256 public constant TOKEN_PRE_SALE_HARD_CAP = 1200000 * 10 ** uint256(decimals);
+    uint256 public constant TOKEN_PRE_SALE_HARD_CAP = 1200000 ether;
 
     // main ico hard cap: 19,800,000 ODY
-    uint256 public constant TOKEN_MAIN_SALE_HARD_CAP = 19800000 * 10 ** uint256(decimals);
+    uint256 public constant TOKEN_MAIN_SALE_HARD_CAP = 19800000 ether;
 
     // minium contribution value: 0.05 ether
     uint public constant MIN_VALUE = 0.05 ether;
@@ -69,7 +69,7 @@ contract ODYToken is ERC223, SafeMath, Ownable {
     uint8 public constant BONUS_STAGE5 = 10; // 6000-14000 ether 10%
 
     // Date for pre ICO: April 15, 2018 12:00 pm UTC to May 15, 2018 12:00 pm UTC
-    uint PRE_SALE_START = 1523793600;
+    uint PRE_SALE_START = 1518574856; // 1523793600;
     uint PRE_SALE_END = 1526385600;
 
     // Date for main ICO: June 15, 2018 12:00 pm UTC to July 15, 2018 12:00 pm UTC
@@ -89,7 +89,8 @@ contract ODYToken is ERC223, SafeMath, Ownable {
 
     uint8 public teamFundReleaseIndex;
 
-    uint256 public constant TEAM_FUND_RELEASE_AMOUNT = 375000 * 10 ** uint256(decimals);
+    // team vest amount for every 6 months 375,000 ODY
+    uint256 public constant TEAM_FUND_RELEASE_AMOUNT = 375000 ether;
 
     // The owner of this address is the Marketing fund
     address public marketingFundAddress;
@@ -113,16 +114,21 @@ contract ODYToken is ERC223, SafeMath, Ownable {
     */
     event TokenPurchase(address indexed purchaser, uint value, uint amount);
     
-    // Function to access name of token .
+    // Function to access name of token
     function name() public view returns (string _name) {
         return name;
     }
-    // Function to access symbol of token .
+    // Function to access symbol of token
     function symbol() public view returns (string _symbol) {
         return symbol;
     }
 
-    // Function to access total supply of tokens .
+    // Function to access decimals of token
+    function decimals() public view returns (uint8 _decimals) {
+        return decimals;
+    }
+
+    // Function to access total supply of tokens
     function totalSupply() public view returns (uint256 _totalSupply) {
         return totalSupply;
     }
@@ -146,18 +152,12 @@ contract ODYToken is ERC223, SafeMath, Ownable {
         reserveFundAddress = _reserveFundAddress;
 
         // 3,000,000 ODY are for marketing
-        balances[marketingFundAddress] = 3000000 * 10 ** uint(decimals);
-        balances[bountyFundAddress] = 1000000 * 10 ** uint(decimals);
-        balances[reserveFundAddress] = 12000000 * 10 ** uint(decimals);
+        balances[marketingFundAddress] = 3000000 ether;
+        balances[bountyFundAddress] = 1000000 ether;
+        balances[reserveFundAddress] = 12000000 ether;
 
         // pre sale ico + main sale ico + team fund
-        balances[this] = TOKEN_PRE_SALE_HARD_CAP + TOKEN_MAIN_SALE_HARD_CAP + 3000000 * 10 ** uint(decimals);
-    }
-
-    /// Require that the buyers can still purchase
-    modifier inProgress {
-        require(isPreSale() && isMainSale());
-        _;
+        balances[this] = TOKEN_PRE_SALE_HARD_CAP + TOKEN_MAIN_SALE_HARD_CAP + 3000000 ether;
     }
 
     // @return if pre sale is in progress
@@ -170,12 +170,8 @@ contract ODYToken is ERC223, SafeMath, Ownable {
         return (now >= MAIN_SALE_START && now <= MAIN_SALE_END);
     }
 
-    function () external payable {
-        buy(msg.sender);
-    }
-
     // buy tokens from contract by sending ether
-    function buy(address _buyer) public payable {
+    function () public payable {
         // only accept a minimum amount of ETH?
         require(msg.value >= MIN_VALUE && msg.value <= MAX_VALUE);
 
@@ -183,10 +179,10 @@ contract ODYToken is ERC223, SafeMath, Ownable {
 
         require(validPurchase(msg.value));
         
-        _transfer(this, teamFundAddress, TEAM_FUND_RELEASE_AMOUNT);
-        weiRaised = safeAdd(weiRaised, tokens);
+        _transfer(this, msg.sender, tokens);
+        weiRaised += msg.value;
 
-        TokenPurchase(_buyer, msg.value, tokens);
+        TokenPurchase(msg.sender, msg.value, tokens);
         forwardFunds();
     }
 
@@ -317,7 +313,7 @@ contract ODYToken is ERC223, SafeMath, Ownable {
     }
 
     function release() onlyOwner public {
-        uint nextReleaseTime = MAIN_SALE_START + teamFundReleaseIndex * (180 days);
+        uint nextReleaseTime = MAIN_SALE_START + (teamFundReleaseIndex * 180 days);
         require(now >= nextReleaseTime && teamFundReleaseIndex < 8);
         _transfer(this, teamFundAddress, TEAM_FUND_RELEASE_AMOUNT);
         teamFundReleaseIndex++;
