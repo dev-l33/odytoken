@@ -151,10 +151,14 @@ contract ODYToken is ERC223, SafeMath, Ownable {
         bountyFundAddress = _bountyFundAddress;
         reserveFundAddress = _reserveFundAddress;
 
+        bytes memory empty;
         // 3,000,000 ODY are for marketing
         balances[marketingFundAddress] = 3000000 ether;
+        Transfer(address(0), marketingFundAddress, 3000000 ether, empty);
         balances[bountyFundAddress] = 1000000 ether;
+        Transfer(address(0), bountyFundAddress, 1000000 ether, empty);
         balances[reserveFundAddress] = 12000000 ether;
+        Transfer(address(0), reserveFundAddress, 12000000 ether, empty);
 
         // pre sale ico + main sale ico + team fund
         balances[this] = TOKEN_PRE_SALE_HARD_CAP + TOKEN_MAIN_SALE_HARD_CAP + 3000000 ether;
