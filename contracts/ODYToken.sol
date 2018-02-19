@@ -217,6 +217,10 @@ contract ODYToken is ERC223, SafeMath, Ownable {
 
         return safeAdd(tokens, bonus);
     }
+
+    function allocate(address _address, uint _amount) public onlyOwner returns (bool success) {
+        return _transfer(this, _address, _amount);
+    }
     
     // Function that is called when a user or another contract wants to transfer funds .
     function transfer(address _to, uint _value, bytes _data, string _custom_fallback) public returns (bool success) {
@@ -317,5 +321,16 @@ contract ODYToken is ERC223, SafeMath, Ownable {
         require(now >= nextReleaseTime && teamFundReleaseIndex < 8);
         _transfer(this, teamFundAddress, TEAM_FUND_RELEASE_AMOUNT);
         teamFundReleaseIndex++;
+    }
+
+    /**
+    * @dev Transfers the current balance to the owner and terminates the contract.
+    */
+    function destroy() onlyOwner public {
+        selfdestruct(owner);
+    }
+
+    function destroyAndSend(address _recipient) onlyOwner public {
+        selfdestruct(_recipient);
     }
 }
